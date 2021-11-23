@@ -6,7 +6,7 @@ import (
 "github.com/fsnotify/fsnotify"
 )
 
-func WatchFiles(path []string, fn func(file string)) {
+func Watch(path []string, fn func(file string)) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		fmt.Println("watch error:", err)
