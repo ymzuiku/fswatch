@@ -1,9 +1,10 @@
 package fswatch
 
 import (
-"fmt"
+	"fmt"
+	"io/ioutil"
 
-"github.com/fsnotify/fsnotify"
+	"github.com/fsnotify/fsnotify"
 )
 
 func Watch(path []string, fn func(file string)) {
@@ -36,12 +37,35 @@ func Watch(path []string, fn func(file string)) {
 		}
 	}()
 
-	for _, p := range path {
-		err = watcher.Add(p)
-		if err != nil {
-			fmt.Println("[error] watcher.Add:", err)
+	readedDirs := map[string]bool{}
+	var readDirs func([]string)
+	readDirs = func(dirs []string) {
+		var nextDirs []string
+		for _, p := range dirs {
+			fmt.Println(p)
+			err = watcher.Add(p)
+			if err != nil {
+				fmt.Println("[error] watcher.Add:", err)
+			}
+			files, err := ioutil.ReadDir(p)
+			if err != nil {
+				fmt.Println("[error] watcher.Add:", err)
+			}
+			for _, v := range files {
+				if readedDirs[v.Name()] {
+					continue
+				}
+				if v.IsDir() {
+					readedDirs[p+"/"+v.Name()] = true
+					nextDirs = append(nextDirs, p+"/"+v.Name())
+				}
+			}
+		}
+		if len(nextDirs) > 0 {
+			readDirs(nextDirs)
 		}
 	}
+	readDirs(path)
 
 	<-done
 }
