@@ -42,7 +42,6 @@ func Watch(path []string, fn func(file string)) {
 	readDirs = func(dirs []string) {
 		var nextDirs []string
 		for _, p := range dirs {
-			fmt.Println(p)
 			err = watcher.Add(p)
 			if err != nil {
 				fmt.Println("[error] watcher.Add:", err)
