@@ -3,11 +3,16 @@ package fswatch
 import (
 	"fmt"
 	"io/ioutil"
+	"path"
+	"strings"
 
 	"github.com/fsnotify/fsnotify"
 )
 
-func Watch(path []string, fn func(file string)) {
+var baseIgnore = []string{"node_modules", ".git", ".vscode", ".idea"}
+
+func Watch(paths, ignore []string, fn func(file string)) {
+	ignore = append(ignore, baseIgnore...)
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		fmt.Println("watch error:", err)
@@ -42,6 +47,17 @@ func Watch(path []string, fn func(file string)) {
 	readDirs = func(dirs []string) {
 		var nextDirs []string
 		for _, p := range dirs {
+			var jump bool
+			for _, v := range ignore {
+				if strings.Contains(p, v) {
+					jump = true
+					break
+				}
+			}
+			if jump {
+				continue
+			}
+
 			err = watcher.Add(p)
 			if err != nil {
 				fmt.Println("[error] watcher.Add:", err)
@@ -55,8 +71,19 @@ func Watch(path []string, fn func(file string)) {
 					continue
 				}
 				if v.IsDir() {
-					readedDirs[p+"/"+v.Name()] = true
-					nextDirs = append(nextDirs, p+"/"+v.Name())
+					dir1 := path.Join(p, v.Name())
+					readedDirs[dir1] = true
+					var jump bool
+					for _, v := range ignore {
+						if strings.Contains(p, v) {
+							jump = true
+							break
+						}
+					}
+					if jump {
+						continue
+					}
+					nextDirs = append(nextDirs, dir1)
 				}
 			}
 		}
@@ -64,7 +91,7 @@ func Watch(path []string, fn func(file string)) {
 			readDirs(nextDirs)
 		}
 	}
-	readDirs(path)
+	readDirs(paths)
 
 	<-done
 }
