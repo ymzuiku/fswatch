@@ -9,7 +9,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-var baseIgnore = []string{"node_modules", ".git", ".vscode", ".idea"}
+var baseIgnore = []string{"node_modules", ".git", ".vscode", ".idea", ".next"}
 
 func Watch(paths, ignore []string, fn func(file string)) {
 	ignore = append(ignore, baseIgnore...)
